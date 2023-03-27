@@ -4,22 +4,22 @@ from fastapi import HTTPException
 
 
 class DirectoryPathNotFoundException(HTTPException):
-    def __init__(self):
-        detail = "Error: Directory path not found."
+    def __init__(self, e: Exception):
+        detail = "Error: Directory path not found. Reason: " + str(e)
         super().__init__(status_code=404, detail=detail)
 
 class PermissionDeniedException(HTTPException):
-    def __init__(self):
-        detail = "Error: Permission denied to delete files."
+    def __init__(self,e: Exception):
+        detail = "Error: Permission denied to delete files. Reason" + str(e)
         super().__init__(status_code=403, detail=detail)
 
 class OtherDeleteException(HTTPException):
-    def __init__(self):
-        detail = "Error: Something went wrong while deleting files."
+    def __init__(self, e: Exception):
+        detail = "Error: Something went wrong while deleting files. Reason" + str(e)
         super().__init__(status_code=500, detail=detail)
 
 
-def validate_image_file_name():
+def validate_image_file_name() -> str:
     paths = ("images/firma.jpg", "images/firma.png", "images/firma.jpeg")
     image_path = None
     for path in paths:
@@ -31,7 +31,7 @@ def validate_image_file_name():
     
     return image_path
 
-def validate_pdf_file_name():
+def validate_pdf_file_name() -> str:
     directory_path = "pdfs"
     pdf_path = os.listdir(directory_path)
     if len(pdf_path) == 0:
@@ -41,7 +41,7 @@ def validate_pdf_file_name():
 
 
 
-def validate_pdf_file_content_delete():
+def validate_pdf_file_content_delete() -> str:
     directory_path = "pdfs"
     
     try:
@@ -53,17 +53,17 @@ def validate_pdf_file_content_delete():
                 os.remove(path)
 
     except FileNotFoundError as e:
-        raise DirectoryPathNotFoundException()
+        raise DirectoryPathNotFoundException(e)
     except PermissionError as e:
-        raise PermissionDeniedException()
+        raise PermissionDeniedException(e)
     except Exception as e:
-        raise OtherDeleteException()
+        raise OtherDeleteException(e)
 
     return "OK"
 
 
 
-def validate_image_file_content_delete():
+def validate_image_file_content_delete() -> str:
     directory_path = "images"
     try:
         contents = os.listdir(directory_path)
@@ -72,11 +72,11 @@ def validate_image_file_content_delete():
             if os.path.isfile(path) and content != "firma_example.jpeg":
                 os.remove(path)
     except FileNotFoundError as e:
-        raise DirectoryPathNotFoundException()
+        raise DirectoryPathNotFoundException(e)
     except PermissionError as e:
-        raise PermissionDeniedException()
+        raise PermissionDeniedException(e)
     except Exception as e:
-        raise OtherDeleteException()
+        raise OtherDeleteException(e)
         
     return "OK"
 
