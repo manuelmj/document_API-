@@ -1,11 +1,9 @@
 from pydantic import BaseModel
 from pydantic import Field
-from datetime import datetime
-from typing_extensions import Annotated
 
 
 
-class Document_information_renuncia(BaseModel):
+class Document_information_resignation(BaseModel):
     Ciudad: str = Field(..., example='Bogota')
     fecha_actual: str = Field(..., example="2021-01-01")
     nombre_jefe: str = Field(..., example='Juan Perez')
@@ -15,3 +13,7 @@ class Document_information_renuncia(BaseModel):
     fecha_renuncia: str = Field(..., example="2021-01-01")
     nombre_empleado: str = Field(..., example='pepito mendoza')
     id_empleado: str = Field(..., example='123456789')
+
+
+class Response_information_resignation(Document_information_resignation):
+    image_firma_path: str = Field(..., example="images/firma_example.jpeg")

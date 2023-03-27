@@ -2,30 +2,31 @@ from fastapi import (APIRouter,
                      UploadFile,
                      HTTPException,
                      status,
-                     BackgroundTasks,
-                     )
+                     BackgroundTasks)
 
-from fastapi import ( File,
+from fastapi import (File,
                      Body, 
                      Query,
                      Depends)
 from fastapi.responses import FileResponse
+
 from backgound_task import (delete_image,
                             delete_pdf)
 
-from createPDF import (data_example, 
-                       template_renuncia_path)
 
 from validation import (validate_image_file_name,
                         validate_pdf_file_name,
                         validate_image_file_content_delete,
                         validate_pdf_file_content_delete)
 
-from createPDF import create_renuncia_PDF
+from models.example_models import (Document_information_resignation_example, 
+                                   template_resignation_path)
+from models.document_model import (Document_information_resignation,
+                                   Response_information_resignation)
+from createPDF import create_resignation_PDF
 import shutil
 import os
 
-from models.document_model import Document_information_renuncia
 
 
 router = APIRouter(
@@ -37,10 +38,9 @@ router = APIRouter(
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_renuncia_example(background_tasks: BackgroundTasks,
                                pdf_file_delete : str = Depends(validate_pdf_file_content_delete),):
-    data_example.update({"image_firma_path":"images/firma_example.jpeg"})
     
     try:
-        create_renuncia_PDF(template_renuncia_path, data_example, "example_resignation")
+        create_resignation_PDF(template_resignation_path, Document_information_resignation_example, "example_resignation")
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while creating the document: " + str(e))
     
@@ -48,8 +48,10 @@ async def get_renuncia_example(background_tasks: BackgroundTasks,
     return FileResponse("pdfs/example_resignation.pdf", media_type='application/pdf', filename="example_resignation.pdf")
 
 
+
+
 @router.get("/downloadFile", status_code=status.HTTP_200_OK, response_class=FileResponse)
-async def download_renuncia_example(background_tasks: BackgroundTasks,
+async def download_renuncia(background_tasks: BackgroundTasks,
                                     pdf_file_path: str = Depends(validate_pdf_file_name)):
                                    
    
@@ -61,13 +63,14 @@ async def download_renuncia_example(background_tasks: BackgroundTasks,
     return FileResponse(pdf_file_path, media_type='application/pdf', filename=f"{pdf_file_path}")
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_renuncia_document( background_tasks: BackgroundTasks,
-                                    document_information: Document_information_renuncia = Body(...,description="An instance of the Document_information_renuncia Pydantic model which contains the necessary data to create the renunciation document."),
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=Response_information_resignation)
+async def create_resignation_document( background_tasks: BackgroundTasks,
+                                    document_information: Document_information_resignation = Body(...,description="An instance of the Document_information_resignation Pydantic model which contains the necessary data to create the renunciation document."),
                                     file_name: str = Query(...,min_length=1, max_length=50, description="The desired name of the PDF file to be created. This value will be used as the prefix of the generated file name."),
                                     image_path: str = Depends(validate_image_file_name),
                                     pdf_file_delete : str = Depends(validate_pdf_file_content_delete),
-                                    image_file_delete : str = Depends(validate_image_file_content_delete)
                                    ):
 
 
@@ -75,13 +78,14 @@ async def create_renuncia_document( background_tasks: BackgroundTasks,
     document_information['image_firma_path'] = image_path
 
     try:
-        create_renuncia_PDF(template_renuncia_path, document_information, file_name)
+        create_resignation_PDF(template_resignation_path, document_information, file_name)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while creating the document: " + str(e))
     
     background_tasks.add_task(delete_image,image_path)
     
-    return {"message": "PDF created"}
+    return document_information
+
 
 
 
@@ -115,10 +119,3 @@ async def load_image(image: UploadFile = File(...,
     #NOTA: debe devolver el archivo insertado
     
     return FileResponse(f"images/firma.{image.filename.split('.')[-1]}", media_type='image/png')
-
-
-
-# revisar algun gestor de archivo para lo de las imagenes y los pdfs (opcional)
-# activar extesiones solo para workspaces
-# agregar el archivo de configuracion de vscode
-#agregar el retorno del archivo de interes 

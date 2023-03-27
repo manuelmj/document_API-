@@ -2,6 +2,23 @@ import os
 from fastapi import HTTPException
 
 
+
+class DirectoryPathNotFoundException(HTTPException):
+    def __init__(self):
+        detail = "Error: Directory path not found."
+        super().__init__(status_code=404, detail=detail)
+
+class PermissionDeniedException(HTTPException):
+    def __init__(self):
+        detail = "Error: Permission denied to delete files."
+        super().__init__(status_code=403, detail=detail)
+
+class OtherDeleteException(HTTPException):
+    def __init__(self):
+        detail = "Error: Something went wrong while deleting files."
+        super().__init__(status_code=500, detail=detail)
+
+
 def validate_image_file_name():
     paths = ("images/firma.jpg", "images/firma.png", "images/firma.jpeg")
     image_path = None
@@ -10,22 +27,22 @@ def validate_image_file_name():
             image_path = path
             break
     if not image_path:
-        raise HTTPException(status_code=400, detail="No se ha cargado una firma")
+        raise HTTPException(status_code=400, detail="No signature has been uploaded")
     
     return image_path
 
 def validate_pdf_file_name():
-    directory_path = "/home/manuel/Visualstudio/Document_API/pdfs"
+    directory_path = "pdfs"
     pdf_path = os.listdir(directory_path)
     if len(pdf_path) == 0:
-        raise HTTPException(status_code=400, detail="No se ha encontrado un archivo PDF")
+        raise HTTPException(status_code=400, detail="PDF file not found")
     
     return os.path.join(directory_path, pdf_path[0])
 
 
 
 def validate_pdf_file_content_delete():
-    directory_path = "/home/manuel/Visualstudio/Document_API/pdfs"
+    directory_path = "pdfs"
     
     try:
         contents = os.listdir(directory_path)
@@ -34,33 +51,33 @@ def validate_pdf_file_content_delete():
             path = os.path.join(directory_path, content)
             if os.path.isfile(path):
                 os.remove(path)
-   #NOTA CREAR LAS EXCEPTIONS PERSONALIZADAS PARA CADA UNO DE LOS CASOS
+
     except FileNotFoundError as e:
-        print(f"Error: {e}. Directory path not found.")
+        raise DirectoryPathNotFoundException()
     except PermissionError as e:
-        print(f"Error: {e}. Permission denied to delete files.")
+        raise PermissionDeniedException()
     except Exception as e:
-        print(f"Error: {e}. Something went wrong while deleting files.")
+        raise OtherDeleteException()
 
     return "OK"
 
 
 
 def validate_image_file_content_delete():
-    directory_path = "/home/manuel/Visualstudio/Document_API/images"
+    directory_path = "images"
     try:
         contents = os.listdir(directory_path)
         for content in contents:
             path = os.path.join(directory_path, content)
-            if os.path.isfile(path):
+            if os.path.isfile(path) and content != "firma_example.jpeg":
                 os.remove(path)
     except FileNotFoundError as e:
-        print(f"Error: {e}. Directory path not found.")
+        raise DirectoryPathNotFoundException()
     except PermissionError as e:
-        print(f"Error: {e}. Permission denied to delete files.")
+        raise PermissionDeniedException()
     except Exception as e:
-        print(f"Error: {e}. Something went wrong while deleting files.")
-    
+        raise OtherDeleteException()
+        
     return "OK"
 
 
