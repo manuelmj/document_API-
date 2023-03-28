@@ -10,3 +10,5 @@ app.include_router(user_create_document.router)
 def root():
     return RedirectResponse(url='/docs')
 
+
+

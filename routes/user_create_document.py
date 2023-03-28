@@ -35,10 +35,32 @@ router = APIRouter(
 )
 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get("/", status_code=status.HTTP_200_OK, response_class=FileResponse)
 async def get_renuncia_example(background_tasks: BackgroundTasks,
                                pdf_file_delete : str = Depends(validate_pdf_file_content_delete),):
-    
+    """
+    ## Description
+    This endpoint generates a sample resignation letter in PDF format using the provided template and document information. 
+    The generated PDF file is returned as the response.
+
+    ## Responses
+    - 200: The generated PDF file is returned as a `FileResponse` object.
+    - 500: An error occurred while creating the document.
+
+    ## Return
+    - A `FileResponse` object containing the generated PDF file.
+
+    ## Raises
+    - `HTTPException`: If an error occurs while creating the PDF document.
+
+    ## Dependencies 
+    - `pdf_file_delete` (str): A string representation of the PDF file to delete.
+
+    ## Background Tasks
+    - `delete_pdf` (function): Deletes the specified PDF file.
+    """
+
+
     try:
         create_resignation_PDF(template_resignation_path, Document_information_resignation_example, "example_resignation")
     except Exception as e:
@@ -52,9 +74,28 @@ async def get_renuncia_example(background_tasks: BackgroundTasks,
 
 @router.get("/downloadFile", status_code=status.HTTP_200_OK, response_class=FileResponse)
 async def download_renuncia(background_tasks: BackgroundTasks,
-                                    pdf_file_path: str = Depends(validate_pdf_file_name)):
+                            pdf_file_path: str = Depends(validate_pdf_file_name)):
                                    
-   
+    """
+    ## Description
+    This endpoint returns the PDF file that was previously generated using the `POST /document/resignation` endpoint.
+
+    ## Responses
+    - 200: The PDF file is returned as a `FileResponse` object.
+    - 404: The PDF file was not found.
+
+    ## Return
+    - A `FileResponse` object containing the PDF file.
+
+    ## Raises
+    - `HTTPException`: If the PDF file was not found.
+
+    ## Dependencies
+    - `pdf_file_path` (str): A string representation of the PDF file path.
+
+    ## Background Tasks
+    - `delete_pdf` (function): Deletes the specified PDF file.
+    """
     if not os.path.exists(pdf_file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document not found ")
     
@@ -73,7 +114,33 @@ async def create_resignation_document( background_tasks: BackgroundTasks,
                                     pdf_file_delete : str = Depends(validate_pdf_file_content_delete),
                                    ):
 
+    """
+    ## Description 
+    This endpoint generates a resignation letter in PDF format using the provided template and document information.
+    The generated PDF file is saved in the `pdfs` directory and the path to the file is returned as the response.
 
+    ## Responses
+    - 201: The path to the generated PDF file is returned as a `Response_information_resignation` object.
+    - 400: The provided file name is invalid.
+    - 500: An error occurred while creating the document.
+
+    ## Return
+    - A `Response_information_resignation` object containing the information  of the generated PDF file.
+    
+    ## Raises
+    - `HTTPException`: If the provided file name is invalid or an error occurs while creating the PDF document.
+    
+    ## arguments
+    - `document_information` (Document_information_resignation): An instance of the Document_information_resignation Pydantic model which contains the necessary data to create the renunciation document.
+    - `file_name` (str): The desired name of the PDF file to be created. This value will be used as the prefix of the generated file name.
+    
+    ## Dependencies
+    - `image_path` (str): A string representation of the image file path.
+    - `pdf_file_delete` (str): this dependency is used to delete the previous pdf file that was generated using the `POST /document/resignation` or other endpoint.
+
+    ## Background Tasks
+    - `delete_image` (function): Deletes the specified image file.
+    """
     document_information = document_information.dict()
     document_information['image_firma_path'] = image_path
 
@@ -89,33 +156,56 @@ async def create_resignation_document( background_tasks: BackgroundTasks,
 
 
 
-@router.post("/loadImage",response_class=FileResponse,status_code=status.HTTP_200_OK)
+@router.post("/loadImage",response_class=FileResponse,status_code=status.HTTP_202_ACCEPTED)
 async def load_image(image: UploadFile = File(...,
                                               max_size=10_000_000, 
                                               content_type=["image/png", "image/jpg", "image/jpeg"], 
                                               description="The image file to be uploaded."),
                                               delete_image: str = Depends(validate_image_file_content_delete)):
+    """
+    ## Description
+    This endpoint uploads an image file to the `images` directory.
 
+    ## Responses
+    - 202: The image file is uploaded to the `images` directory.
+    - 204: The image file is empty.
+    - 400: The image file size exceeds the maximum allowed limit (10MB) or the image file is not in png, jpg, or jpeg format.
+    - 404: The image file was not found.
+    - 500: An error occurred while uploading the image file.
 
+    ## Return
+    - A `FileResponse` object containing the uploaded image file.
+
+    ## Raises
+    - `HTTPException`: If the image file size exceeds the maximum allowed limit (10MB) or the image file is not in png, jpg, or jpeg format or the image file was not found or an error occurred while uploading the image file.
+
+    ## Arguments
+    - `image` (UploadFile): The image file to be uploaded.
+
+    ## Dependencies
+    - `delete_image` (str): this dependency is used to delete the previous image file that was generated using the `POST /document/resignation/loadImage` or other endpoint.
+    
+    """
+    if image.zise < 1 :
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="file size 0")
+    
     if image.size > 10_000_000:
-        raise HTTPException(status_code=400, detail="File size exceeds the maximum allowed limit (1MB)")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File size exceeds the maximum allowed limit (1MB)")
 
     if image.filename.split('.')[-1] not in ['png','jpg','jpeg']:
-        raise HTTPException(status_code=400, detail="Image must be in png, jpg, or jpeg format")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image must be in png, jpg, or jpeg format")
 
     image_path = f"images/{image.filename}"
     with open(image_path, "w+b") as buffer:
         shutil.copyfileobj(image.file, buffer) 
 
     if not os.path.exists(f"images/{image.filename}"):
-        raise HTTPException(status_code=400, detail="Error occurred while uploading image")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error occurred while uploading image")
     
     new_image_path = f"images/firma.{image.filename.split('.')[-1]}"
     os.rename(image_path, new_image_path)
     
     if not os.path.exists(f"images/firma.{image.filename.split('.')[-1]}"):
-        raise HTTPException(status_code=400, detail="Error occurred while renaming image")
-    
-    #NOTA: debe devolver el archivo insertado
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error occurred while renaming image")
     
     return FileResponse(f"images/firma.{image.filename.split('.')[-1]}", media_type='image/png')

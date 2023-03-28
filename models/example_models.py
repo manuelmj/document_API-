@@ -2,6 +2,7 @@
 
 template_resignation_path = 'templates/renuncia_template.html'
 
+#Example data information for the resignation document
 Document_information_resignation_example:dict() = {
 
     "Ciudad": 'Bogota',
