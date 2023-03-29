@@ -2,7 +2,8 @@ from fastapi import (APIRouter,
                      UploadFile,
                      HTTPException,
                      status,
-                     BackgroundTasks)
+                     BackgroundTasks,
+                     Request)
 
 from fastapi import (File,
                      Body, 
@@ -14,7 +15,7 @@ from backgound_task import (delete_image,
                             delete_pdf)
 
 
-from validation import (validate_image_file_name,
+from validation.file_validation import (validate_image_file_name,
                         validate_pdf_file_name,
                         validate_image_file_content_delete,
                         validate_pdf_file_content_delete)
@@ -27,11 +28,13 @@ from createPDF import create_resignation_PDF
 import shutil
 import os
 
-
+import uuid 
+from validation.cookie_validation import  session_cookie_id_validator
 
 router = APIRouter(
     prefix="/document/resignation",
-    tags=["document/resignation"]
+    tags=["document/resignation"],
+    dependencies=[Depends( session_cookie_id_validator)]
 )
 
 
@@ -108,6 +111,7 @@ async def download_renuncia(background_tasks: BackgroundTasks,
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=Response_information_resignation)
 async def create_resignation_document( background_tasks: BackgroundTasks,
+                                    request:Request,
                                     document_information: Document_information_resignation = Body(...,description="An instance of the Document_information_resignation Pydantic model which contains the necessary data to create the renunciation document."),
                                     file_name: str = Query(...,min_length=1, max_length=50, description="The desired name of the PDF file to be created. This value will be used as the prefix of the generated file name."),
                                     image_path: str = Depends(validate_image_file_name),
@@ -140,10 +144,13 @@ async def create_resignation_document( background_tasks: BackgroundTasks,
 
     ## Background Tasks
     - `delete_image` (function): Deletes the specified image file.
+
     """
+
     document_information = document_information.dict()
     document_information['image_firma_path'] = image_path
-
+    cookie_id = request.cookies.get("session_id")
+    file_name = "{}_{}".format(file_name,cookie_id) 
     try:
         create_resignation_PDF(template_resignation_path, document_information, file_name)
     except Exception as e:
@@ -157,7 +164,8 @@ async def create_resignation_document( background_tasks: BackgroundTasks,
 
 
 @router.post("/loadImage",response_class=FileResponse,status_code=status.HTTP_202_ACCEPTED)
-async def load_image(image: UploadFile = File(...,
+async def load_image(request:Request,
+                     image: UploadFile = File(...,
                                               max_size=10_000_000, 
                                               content_type=["image/png", "image/jpg", "image/jpeg"], 
                                               description="The image file to be uploaded."),
@@ -186,8 +194,6 @@ async def load_image(image: UploadFile = File(...,
     - `delete_image` (str): this dependency is used to delete the previous image file that was generated using the `POST /document/resignation/loadImage` or other endpoint.
     
     """
-    if image.zise < 1 :
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="file size 0")
     
     if image.size > 10_000_000:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File size exceeds the maximum allowed limit (1MB)")
@@ -202,10 +208,25 @@ async def load_image(image: UploadFile = File(...,
     if not os.path.exists(f"images/{image.filename}"):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error occurred while uploading image")
     
-    new_image_path = f"images/firma.{image.filename.split('.')[-1]}"
-    os.rename(image_path, new_image_path)
+    cookie_id = request.cookies.get("session_id")
+    new_image_path = f"images/firma_{cookie_id}.{image.filename.split('.')[-1]}"
     
-    if not os.path.exists(f"images/firma.{image.filename.split('.')[-1]}"):
+    try:
+        os.rename(image_path, new_image_path)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error occurred while renaming image")
+    
+    if not os.path.exists(new_image_path):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error occurred while renaming image")
     
-    return FileResponse(f"images/firma.{image.filename.split('.')[-1]}", media_type='image/png')
+    return FileResponse(new_image_path, media_type='image/png')
+
+
+
+
+#punto 1. se podria usar usa cookie para crear una sesion personalizada
+#punto 2. agregar ese id a la cookie 
+#punto 3. revisr pagina 189 del libro de fastapi
+#punto 4. usar la cookie para eliminar los elementos residuo
+#punto 5. cuando la cookie expire la tarea de segundo plano elimne las sesiones 
+#revisar usar un pront para generar el doby 

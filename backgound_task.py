@@ -14,6 +14,7 @@ def delete_image(file_path: str) -> str:
         assert ErrorDeleteFileException(e)
     return "OK"
 
+
 def delete_pdf(file_path: str) -> str:
     try:
         os.remove(file_path)
