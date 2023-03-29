@@ -1,4 +1,5 @@
-
+#this file contains the examples of the data that will be used to generate the documents
+#also contains the path of the templates that will be used to generate the documents
 
 template_resignation_path = 'templates/renuncia_template.html'
 

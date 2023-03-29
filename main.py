@@ -30,6 +30,11 @@ async def root():
 
 @app.middleware("http")
 async def delete_expired_sessions(request: Request, call_next):
+    """
+    Delete expired sessions or update the expire time of the 
+    session if it not expired
+    """
+
     # get the remote IP address of the client
     remote_ip = request.client.host
 

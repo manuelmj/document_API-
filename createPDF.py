@@ -3,6 +3,15 @@ import pdfkit
 
 
 def create_resignation_PDF(template_path, data,name):
+    """
+    This function creates a pdf file from a template and data.
+    args:
+        template_path (str): path of the template
+        data (dict): data to fill the template
+        name (str): name of the pdf file
+    returns:
+        str: "OK"
+    """
     template_name = template_path.split('/')[-1]
     template_path = template_path.replace(template_name, '')
 

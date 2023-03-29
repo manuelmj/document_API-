@@ -1,5 +1,7 @@
+from fastapi import (HTTPException, 
+                     status, 
+                     Request)
 import os 
-from fastapi import HTTPException, status, Request
 
 
 class DirectoryPathNotFoundException(HTTPException):
@@ -19,6 +21,18 @@ class OtherDeleteException(HTTPException):
 
 
 def validate_image_file_name(request:Request) -> str:
+    """
+    This function validates if the image file exists in the images folder.
+    If the file exists, it returns the path of the file.
+    also this function validates if the cookie session id is the same as the file name.
+    
+    args:
+        request: Request
+    returns:
+        str: path of the image file
+    raises:
+        HTTPException: 400 if the image file is not found
+    """
 
     cookie_id = request.cookies.get("session_id")
     paths = (f"images/firma_{cookie_id}.jpg", f"images/firma_{cookie_id}.png", f"images/firma_{cookie_id}.jpeg")
@@ -33,6 +47,18 @@ def validate_image_file_name(request:Request) -> str:
     return image_path
 
 def validate_pdf_file_name(request:Request) -> str:
+    """
+    This function validates if the pdf file exists in the pdfs folder.
+    If the file exists, it returns the path of the file.
+    also this function validates if the cookie session id is the same as the file name.
+
+    args:
+        request: Request
+    returns:
+        str: path of the pdf file
+    raises:
+        HTTPException: 400 if the pdf file is not found
+    """
     directory_path = "pdfs"
     pdf_path = os.listdir(directory_path)
     if len(pdf_path) == 0:
@@ -44,8 +70,20 @@ def validate_pdf_file_name(request:Request) -> str:
 
 
 def validate_pdf_file_content_delete(request:Request) -> str:
-    ##ponerlo para que elimine solo los arcvhivos pdf de un usuario en especifico
-    #concatenar el toker para solo sobreescribir el que tenga el token 
+    """
+        This function validates if the pdf folder there are files with the same cookie session id.
+        If the file exists, it deletes the file.
+    
+        args:
+            request: Request
+        returns:
+            str: "OK"
+        raises:
+            DirectoryPathNotFoundException: if the directory path is not found
+            PermissionDeniedException: if the permission is denied to delete the file
+            OtherDeleteException: if there is another error while deleting the file
+
+    """
     directory_path = "pdfs"
     cookie_id = request.cookies.get("session_id")
     
@@ -69,6 +107,19 @@ def validate_pdf_file_content_delete(request:Request) -> str:
 
 
 def validate_image_file_content_delete(request:Request) -> str:
+    """
+        This function validates if the images folder there are files with the same cookie session id.
+        If the file exists, it deletes the file.
+
+        args:
+            request: Request
+        returns:
+            str: "OK"
+        raises:
+            DirectoryPathNotFoundException: if the directory path is not found
+            PermissionDeniedException: if the permission is denied to delete the file
+            OtherDeleteException: if there is another error while deleting the file
+    """
     directory_path = "images"
     cookie_id = request.cookies.get("session_id")
     try:
@@ -91,6 +142,19 @@ def validate_image_file_content_delete(request:Request) -> str:
 
 
 async def pdf_file_sessionClose_delete(cookie_expired:str):
+    """
+        This function validates if the pdf folder there are files with the same expire cookie session id.
+        If the file exists, it deletes the file.
+
+        args:
+            cookie_expired: str
+        returns:    
+            str: "OK"
+        raises:
+            DirectoryPathNotFoundException: if the directory path is not found
+            PermissionDeniedException: if the permission is denied to delete the file
+            OtherDeleteException: if there is another error while deleting the file
+    """
     directory_path = "pdfs"
     try:
         contents = os.listdir(directory_path)
@@ -108,9 +172,22 @@ async def pdf_file_sessionClose_delete(cookie_expired:str):
         
     return "OK"
  
-    _   
+  
 
 async def image_file_sessionClose_delete(cookie_expired:str):
+    """
+        This function validates if the images folder there are files with the same expire cookie session id.
+        If the file exists, it deletes the file.
+
+        args:
+            cookie_expired: str
+        returns:
+            str: "OK"
+        raises:
+            DirectoryPathNotFoundException: if the directory path is not found
+            PermissionDeniedException: if the permission is denied to delete the file
+            OtherDeleteException: if there is another error while deleting the file
+    """
     directory_path = "images"
     try:
         contents = os.listdir(directory_path)
@@ -128,7 +205,6 @@ async def image_file_sessionClose_delete(cookie_expired:str):
         
     return "OK"
  
-    _
 
 
 

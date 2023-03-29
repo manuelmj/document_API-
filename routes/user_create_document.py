@@ -28,7 +28,6 @@ from createPDF import create_resignation_PDF
 import shutil
 import os
 
-import uuid 
 from validation.cookie_validation import  session_cookie_id_validator
 
 router = APIRouter(
@@ -58,11 +57,12 @@ async def get_renuncia_example(background_tasks: BackgroundTasks,
 
     ## Dependencies 
     - `pdf_file_delete` (str): A string representation of the PDF file to delete.
-
+    - `session_cookie_id_validator` (str): A string representation of the session cookie id.
+    
     ## Background Tasks
     - `delete_pdf` (function): Deletes the specified PDF file.
+    
     """
-
 
     try:
         create_resignation_PDF(template_resignation_path, Document_information_resignation_example, "example_resignation")
@@ -95,7 +95,8 @@ async def download_renuncia(background_tasks: BackgroundTasks,
 
     ## Dependencies
     - `pdf_file_path` (str): A string representation of the PDF file path.
-
+    - `session_cookie_id_validator` (str): A string representation of the session cookie id.
+    
     ## Background Tasks
     - `delete_pdf` (function): Deletes the specified PDF file.
     """
@@ -104,7 +105,7 @@ async def download_renuncia(background_tasks: BackgroundTasks,
     
     background_tasks.add_task(delete_pdf,pdf_file_path)    
     
-    return FileResponse(pdf_file_path, media_type='application/pdf', filename=f"{pdf_file_path}")
+    return FileResponse(pdf_file_path, media_type='application/pdf', filename=pdf_file_path.split("/")[-1].split("_")[0]+".pdf") 
 
 
 
@@ -141,7 +142,8 @@ async def create_resignation_document( background_tasks: BackgroundTasks,
     ## Dependencies
     - `image_path` (str): A string representation of the image file path.
     - `pdf_file_delete` (str): this dependency is used to delete the previous pdf file that was generated using the `POST /document/resignation` or other endpoint.
-
+    - `session_cookie_id_validator` (str): A string representation of the session cookie id.
+   
     ## Background Tasks
     - `delete_image` (function): Deletes the specified image file.
 
@@ -192,7 +194,7 @@ async def load_image(request:Request,
 
     ## Dependencies
     - `delete_image` (str): this dependency is used to delete the previous image file that was generated using the `POST /document/resignation/loadImage` or other endpoint.
-    
+    - `session_cookie_id_validator` (str): A string representation of the session cookie id.
     """
     
     if image.size > 10_000_000:
