@@ -6,7 +6,7 @@ from fastapi import Request
 sessions = {}
 MAX_SESSIONS = 2  # max number of sessions per IP
 
-SESSION_EXPIRE_TIME = 30
+SESSION_EXPIRE_TIME = 1800  # 30 minutes
 
 async def session_cookie_id_validator(request:Request,session_id: str = Cookie(None)):
     if not session_id:

@@ -22,7 +22,7 @@ router = APIRouter(
 )
 
 
-@router.get("/session")
+@router.get("/")
 async def read_session(response: Response, request: Request):
     session_id = str(uuid4())  
     remote_ip = request.client.host
@@ -53,7 +53,7 @@ async def get_session_all(request:Request, session_id: str = Depends( session_co
 
 
 
-@router.delete("/session")
+@router.delete("/")
 async def delete_session(request: Request,response : Response, session_id: str = Depends( session_cookie_id_validator)):
         
     actual_ip = request.client.host
