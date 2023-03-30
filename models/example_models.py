@@ -1,8 +1,8 @@
 #this file contains the examples of the data that will be used to generate the documents
 #also contains the path of the templates that will be used to generate the documents
 
-template_resignation_path = 'templates/renuncia_template.html'
-
+#template_resignation_path = 'templates/renuncia_template.html'
+template_resignation_path = "/home/manuel/Visualstudio/Document_API/templates/Renuncia_2.0/renuncia_2_0.html"
 #Example data information for the resignation document
 Document_information_resignation_example:dict() = {
 

@@ -21,11 +21,12 @@ def create_resignation_PDF(template_path, data,name):
     html = template.render(data)
     options = {
         'page-size': 'Letter',
-        'margin-top': '0.75in',
+        'margin-top': '0in',
         'margin-right': '0.75in',
-        'margin-bottom': '0.75in',
-        'margin-left': '0.75in',
+        'margin-bottom': '0in',
+         'margin-left': '0in',
         'encoding': "UTF-8",
+
     }
     config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
     output_path = f"pdfs/{name}.pdf"
