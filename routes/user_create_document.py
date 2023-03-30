@@ -114,7 +114,7 @@ async def download_renuncia(background_tasks: BackgroundTasks,
 async def create_resignation_document( background_tasks: BackgroundTasks,
                                     request:Request,
                                     document_information: Document_information_resignation = Body(...,description="An instance of the Document_information_resignation Pydantic model which contains the necessary data to create the renunciation document."),
-                                    file_name: str = Query(...,min_length=1, max_length=50, description="The desired name of the PDF file to be created. This value will be used as the prefix of the generated file name."),
+                                    file_name: str = Query(...,min_length=1, max_length=50,example="prueba", description="The desired name of the PDF file to be created. This value will be used as the prefix of the generated file name."),
                                     image_path: str = Depends(validate_image_file_name),
                                     pdf_file_delete : str = Depends(validate_pdf_file_content_delete),
                                    ):

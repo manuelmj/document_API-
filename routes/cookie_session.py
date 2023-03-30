@@ -43,7 +43,7 @@ async def get_session(response: Response, request: Request):
     ## Dependencies
     - None
 
-    ##Background tasks
+    ## Background tasks
     - None
 
     ## Cookies
